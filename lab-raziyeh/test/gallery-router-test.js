@@ -98,9 +98,6 @@ describe('test /api/gallery', function(){
       it('should return 401', done => {
         request.post(`${url}/api/gallery`)
         .send(exampleGallery)
-        .set({
-          Authorization: `Bearer ${''}`,
-        })
       .end((err, res) => {
         expect(res.status).to.equal(401);
         done();
@@ -291,10 +288,9 @@ describe('test /api/gallery', function(){
         })
         .send({name:'rozi', desc:'hey I am updated'})
         .end((err, res) => {
-          console.log('------------------>',res.body);
           if(err) done(err);
           expect(res.status).to.equal(200);
-          expect(res.text.name).to.equal('rozi');
+          expect(res.body.name).to.equal('rozi');
           expect(err).to.be.null;
           done();
         });

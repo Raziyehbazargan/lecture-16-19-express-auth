@@ -38,12 +38,16 @@ galleryRouter.delete('/api/gallery/:id', bearerAuth, function(req, res, next){
 
   Gallery.findById(req.params.id)
   .then( gallery => {
+    console.log('IDDDDDD-------------------------->', gallery.userID.toString()  , req.user._id.toString());
     if(gallery.userID.toString() !== req.user._id.toString())
       return next(createError(401, 'invalid userid'));
-    return Gallery.remove({_id: gallery._id});
+    return Gallery.findByIdAndRemove(gallery._id);
   })
   .then(next(res.status(204).send()))
-  .catch(next(createError(401, 'invalid id')));
+  .catch( (err) => {
+    console.log('errrrror)))))))))))))))))))))))))))))', err);
+    next(createError(401, 'invalid id'));
+  });
 });
 
 galleryRouter.put('/api/gallery/:id', bearerAuth, jsonParser, function(req, res, next){
@@ -51,13 +55,14 @@ galleryRouter.put('/api/gallery/:id', bearerAuth, jsonParser, function(req, res,
   
   Gallery.findById(req.params.id)
   .then( gallery => {
-    if(gallery.userID.toString() === req.user._id.toString())
-      return next(createError(401, 'invalid userid'));
-    return Gallery.findByIdAndUpdate( gallery._id, req.body, {new:true});
+    if(gallery.userID.toString() !== req.user._id.toString())
+      return Promise.reject(createError(401, 'invalid userid'));
+    return Gallery.findByIdAndUpdate( gallery._id, req.body, { new:true});
   })
   .then(gallery => res.json(gallery))
   .catch(err => {
     if(err.name === 'validationError') return next(err);
-    next(createError(404, err.message));
+    if(err.status) return next(err);
+    next(createError(404, 'not found'));
   });
 });
