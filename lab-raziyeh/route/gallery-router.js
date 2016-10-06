@@ -38,16 +38,12 @@ galleryRouter.delete('/api/gallery/:id', bearerAuth, function(req, res, next){
 
   Gallery.findById(req.params.id)
   .then( gallery => {
-    console.log('IDDDDDD-------------------------->', gallery.userID.toString()  , req.user._id.toString());
     if(gallery.userID.toString() !== req.user._id.toString())
       return next(createError(401, 'invalid userid'));
     return Gallery.findByIdAndRemove(gallery._id);
   })
   .then(next(res.status(204).send()))
-  .catch( (err) => {
-    console.log('errrrror)))))))))))))))))))))))))))))', err);
-    next(createError(401, 'invalid id'));
-  });
+  .catch(next(createError(401, 'invalid id')));
 });
 
 galleryRouter.put('/api/gallery/:id', bearerAuth, jsonParser, function(req, res, next){

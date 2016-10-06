@@ -14,6 +14,7 @@ const debug = require('debug')('sulgram:pic-router');
 const Pic = require('../model/pic.js');
 //const User = require('../model/user.js');
 const Gallery = require('../model/gallery.js');
+const bearerAuth = require('../lib/bearer-auth-middleware.js');
 
 // module constants
 const s3 = new AWS.S3();
@@ -52,9 +53,36 @@ picRouter.post('/api/gallery/:galleryID/pic', upload.single('image'), function(r
     .then( pic => res.json(pic))
     .catch(next);
   });
-
 });
 
-picRouter.delete('/api/gallery/:galleryID/pic/:id' , function(req, res, next) {
-  debug('POST /api/gallery/:galleryID/pic');
+picRouter.delete('/api/gallery/:galleryID/pic/:id',bearerAuth ,function(req, res, next) {
+  debug('POST /api/gallery/:galleryID/pic/:id');
+
+  var params = {
+    Bucket: 'STRING_VALUE',
+    Delete: { 
+      Objects: [ 
+        {
+          Key: 'STRING_VALUE', 
+          VersionId: 'STRING_VALUE'
+        },
+      ],
+      Quiet: true || false
+    },
+    MFA: 'STRING_VALUE',
+    RequestPayer: 'requester'
+  };
+
+  s3.deleteObjects(params, function(err, s3data) {
+    if(err) return next(err);    
+
+    Pic.findById(req.params.id)
+    .then( pic => {
+      if(pic.userID.toString() !== req.user._id.toString()) 
+        return next(createError(401, 'invalid userid'));
+      return Pic.findByIdAndRemove(pic._id);
+    })
+   .then(next(res.status(204).send()))
+   .catch(next(createError(401, 'invalid id')));
+  });
 });
